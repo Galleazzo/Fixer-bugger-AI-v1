@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Files;
 
 @Service
 public class BugFixService {
@@ -28,9 +29,20 @@ public class BugFixService {
         if (foundMethod == null) {
             throw new RuntimeException("Método não encontrado no projeto.");
         }
+
         String suggestedCode = openAIClient.getSuggestedFix(foundMethod.methodCode, request.getExpectedBehavior());
         MethodReplacer.replaceMethodInFile(new File(foundMethod.filePath), foundMethod.methodCode, suggestedCode);
+
+        String fullClassContent = Files.readString(new File(foundMethod.filePath).toPath());
+        String additionalImports = openAIClient.askForMissingImports(fullClassContent, request.getMethodName());
+
+        if (!"Nenhum".equalsIgnoreCase(additionalImports.trim())) {
+            String updatedContent = additionalImports + "\n\n" + fullClassContent;
+            Files.writeString(new File(foundMethod.filePath).toPath(), updatedContent);
+        }
+
         JavaFormatterUtil.formatFile(new File(foundMethod.filePath));
+
         String branchName = "fix/" + request.getMethodName();
         String token = tokenProvider.getToken();
         GitUtils.createBranchAndPush(repoDir, branchName, foundMethod.filePath, token);
@@ -38,4 +50,5 @@ public class BugFixService {
 
         return "Código corrigido com sucesso! Método atualizado no arquivo.";
     }
+
 }
