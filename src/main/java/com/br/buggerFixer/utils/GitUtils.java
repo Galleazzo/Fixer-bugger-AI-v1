@@ -12,10 +12,7 @@ import java.nio.file.Files;
 
 public class GitUtils {
 
-    @Value("${githubToken}")
-    private static String gitHubToken;
-
-    public static void createBranchAndPush(File repoDir, String branchName, String changedFilePath) throws Exception {
+    public static void createBranchAndPush(File repoDir, String branchName, String changedFilePath, String gitHubToken) throws Exception {
         try (Git git = Git.open(repoDir)) {
             git.checkout().setCreateBranch(true).setName(branchName).call();
             git.add().addFilepattern(".").call();

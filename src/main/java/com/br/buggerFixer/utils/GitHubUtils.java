@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 
 public class GitHubUtils {
-    @Value("${githubToken}")
-    private static String gitHubToken;
 
-    public static void createPullRequest(String githubUrl, String head, String base, String title, String body) throws IOException {
+    public static void createPullRequest(String githubUrl, String head, String base, String title, String body, String gitHubToken) throws IOException {
         GitHub github = new GitHubBuilder().withOAuthToken(gitHubToken).build();
 
         String repoPath = githubUrl.replace("https://github.com/", "").replace(".git", "");

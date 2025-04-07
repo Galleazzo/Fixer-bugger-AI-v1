@@ -16,8 +16,20 @@ public class MethodFinder {
         }
     }
 
-    public static FoundMethod findMethodInProject(File projectDir, String methodName) throws IOException {
-        Pattern pattern = Pattern.compile("(public|protected|private|static|final|\\s)+[\\w<>\\[\\]]+\\s+" + methodName + "\\s*\\([^)]*\\)\\s*(throws\\s+[\\w.,\\s]+)?\\s*\\{", Pattern.MULTILINE);
+    public static FoundMethod findMethodInProject(File projectDir, String fullMethodName) throws IOException {
+        String[] parts = fullMethodName.split("\\.");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("O nome do método deve estar no formato Classe.metodo");
+        }
+
+        String className = parts[0];
+        String methodName = parts[1];
+
+        Pattern methodPattern = Pattern.compile(
+                "(public|protected|private|static|final|\\s)+[\\w<>\\[\\]]+\\s+" + methodName +
+                        "\\s*\\([^)]*\\)\\s*(throws\\s+[\\w.,\\s]+)?\\s*\\{",
+                Pattern.MULTILINE
+        );
 
         try {
             Files.walk(projectDir.toPath())
@@ -25,7 +37,12 @@ public class MethodFinder {
                     .forEach(file -> {
                         try {
                             String content = Files.readString(file);
-                            Matcher matcher = pattern.matcher(content);
+
+                            if (!content.contains("class " + className)) {
+                                return;
+                            }
+
+                            Matcher matcher = methodPattern.matcher(content);
 
                             if (matcher.find()) {
                                 int start = matcher.start();
